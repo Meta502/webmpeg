@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres
+    volumes:
+      - law_django_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+  
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+
+  web:
+    build: .
+    command: >
+      run sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - db
+
+volumes:
+  law_django_data:
