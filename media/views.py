@@ -5,28 +5,63 @@ from drf_yasg import openapi
 
 from rest_framework import serializers
 from rest_framework.views import APIView, Response, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, JSONParser
 from media.constants import VIDEO_CREATE_DEFAULT_OPERATIONS
 
 from media.models import Operation, OperationGroup, Video
 
-# Create your views here.
+
+class OperationSerializer(serializers.Serializer):
+    operation_name = serializers.ChoiceField(choices=[tuple(item) for item in Operation.MEDIA_OPERATION_TYPE_CHOICES.items()])
+    arguments = serializers.JSONField()
+
+class VideoSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    file = serializers.FileField()
+    operations = serializers.ListSerializer(child=OperationSerializer())
+    status = serializers.CharField()
+    processed_url = serializers.CharField(allow_blank=True, allow_null=True)
+
 class ListCreateVideoView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser]
 
-    class CreateVideoRequestSerializer(serializers.Serializer):
-        class OperationSerializer(serializers.Serializer):
-            operation_name = serializers.ChoiceField(choices=[tuple(item) for item in Operation.MEDIA_OPERATION_TYPE_CHOICES.items()])
-            arguments = serializers.JSONField()
-
+    class CreateVideoRequestSerializer(serializers.Serializer):    
         file = serializers.FileField()
         operations = serializers.ListSerializer(child=OperationSerializer())
 
     class CreateVideoResponseSerializer(serializers.Serializer):
         message = serializers.CharField()
 
+    class ListVideoResponseSerializer(serializers.Serializer): 
+        videos = serializers.ListSerializer(child=VideoSerializer())
+
+    @swagger_auto_schema(
+        responses={
+            "200": ListVideoResponseSerializer(),
+        },
+        tags=["video"],
+    )
+    def get(self, request):
+        user_videos = {
+            "videos": [
+                {
+                    "id": video.id,
+                    "file": video.file,
+                    "operations": video.operation_group.operations.all(),
+                    "status": video.status,
+                    "processed_url": video.processed_file,
+                }
+                for video in Video.objects.filter(user=request.user)
+            ]
+        } 
+
+        return Response(
+            self.ListVideoResponseSerializer(
+                user_videos,
+            ).data
+        )
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -42,7 +77,7 @@ class ListCreateVideoView(APIView):
         responses={
             "201": CreateVideoResponseSerializer(),
         },
-        tags=["Video"],
+        tags=["video"],
     )
     def post(self, request):
         serializer = self.CreateVideoRequestSerializer(
@@ -55,6 +90,7 @@ class ListCreateVideoView(APIView):
         
         video = Video.objects.create(
             file=serializer.validated_data["file"],
+            user=request.user,
         )
         operation_group = OperationGroup.objects.create(
             video=video,

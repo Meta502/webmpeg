@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.core.management import os
 from django.db import models
 from django.db.models.fields.json import json
@@ -20,18 +21,38 @@ class Video(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     file = models.FileField()
-    
+
     status = models.CharField(
         max_length=64,
         choices=MEDIA_STATUS_TYPE_CHOICES.items(),
         default=MediaStatusType.PENDING,
     )
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="videos")
+
     def start_processing(self):
         rabbitmq_client.publish("default", json.dumps({ "id": str(self.id) }))
 
     @property
-    def filename(self):
+    def processed_file(self):
+        if self.status != self.MediaStatusType.FINISHED:
+            return None
+
+        return f"/uploads/{self.id}.{self.file_extension}"
+
+    @property
+    def file_extension(self):
+        file_split = self.filename.split(".")
+        if len(file_split) == 0:
+            return ""
+
+        if len(file_split) == 1:
+            return file_split[0]
+
+        return file_split[-1]
+
+    @property
+    def filename(self) -> str:
         return os.path.basename(self.file.name)
 
 class OperationGroup(models.Model):
@@ -57,5 +78,5 @@ class Operation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     group = models.ForeignKey(OperationGroup, related_name="operations", on_delete=models.CASCADE)
     operation_name = models.CharField(choices=MEDIA_OPERATION_TYPE_CHOICES.items(), max_length=32)
-    arguments = models.JSONField()
+    arguments = models.JSONField(blank=True, null=True)
 
