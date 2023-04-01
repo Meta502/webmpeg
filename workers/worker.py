@@ -34,22 +34,21 @@ def ack_message(channel, delivery_tag, is_nack=False):
 
 def process_video(video: Video, connection: BlockingConnection, channel: Channel, delivery_tag):
     input = ffmpeg.input(video.file.path)
-    audio_stream = input.audio
 
-    processed_stream = VideoProcessor.run(
-        input,
+    processed_audio, processed_video = VideoProcessor.run(
+        input.audio,
+        input.video,
         video.operation_group,
     ) 
 
     try:
         ffmpeg.output(
-            processed_stream,
-            audio_stream,
+            processed_video,
+            processed_audio,
             f"uploads/{video.id}.mp4",
-            loglevel="quiet",
             threads=2
-        ).overwrite_output().run(capture_stderr=True)
-    except ffmpeg.Error:
+        ).overwrite_output().run()
+    except ffmpeg.Error as e:
         cb = functools.partial(ack_message, channel=channel, delivery_tag=delivery_tag, is_nack=True)
         connection.add_callback_threadsafe(cb)
         print(f"[REQUEST FAILED] {video.id}")

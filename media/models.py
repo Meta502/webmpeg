@@ -1,6 +1,9 @@
 from django.core.management import os
 from django.db import models
+from django.db.models.fields.json import json
 from django.urls.converters import uuid
+
+from engines.rabbitmq import rabbitmq_client
 
 # Create your models here.
 class Video(models.Model):
@@ -23,6 +26,9 @@ class Video(models.Model):
         choices=MEDIA_STATUS_TYPE_CHOICES.items(),
         default=MediaStatusType.PENDING,
     )
+
+    def start_processing(self):
+        rabbitmq_client.publish("default", json.dumps({ "id": str(self.id) }))
 
     @property
     def filename(self):

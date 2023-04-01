@@ -15,25 +15,28 @@ class VideoProcessor:
         return input.vflip()
 
     @classmethod
-    def trim(cls, input, args):
-        return input.trim(args["start_frame"], args["end_frame"])
+    def trim(cls, audio, video, args):
+        return (
+            ffmpeg.filter(audio, "atrim", start=args["start"], end=args["end"]).filter("asetpts", expr="PTS-STARTPTS"),
+            ffmpeg.trim(video, start=args["start"], end=args["end"]).setpts("PTS-STARTPTS"),
+        )
 
     @classmethod
     def resize(cls, input, args):
         return input.filter("scale", args["width"], args["height"])
 
     @classmethod
-    def run(cls, input, operation_group: OperationGroup):
+    def run(cls, audio, video, operation_group: OperationGroup):
         for operation in operation_group.operations.all():
             if operation.operation_name == Operation.MediaOperationType.CROP:
-                input = cls.crop(input, operation.arguments)
+                video = cls.crop(video, operation.arguments)
             elif operation.operation_name == Operation.MediaOperationType.HFLIP:
-                input = cls.hflip(input)
+                video = cls.hflip(video)
             elif operation.operation_name == Operation.MediaOperationType.VFLIP:
-                input = cls.vflip(input)
+                video = cls.vflip(video)
             elif operation.operation_name == Operation.MediaOperationType.TRIM:
-                input = cls.trim(input, operation.arguments)
+                audio, video = cls.trim(audio, video, operation.arguments)
             elif operation.operation_name == Operation.MediaOperationType.RESIZE:
-                input = cls.resize(input, operation.arguments)
+                video = cls.resize(video, operation.arguments)
        
-        return input
+        return audio, video
