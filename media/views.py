@@ -29,6 +29,7 @@ class ListCreateVideoView(APIView):
 
     class CreateVideoRequestSerializer(serializers.Serializer):    
         file = serializers.FileField()
+        quality_level = serializers.IntegerField()
         operations = serializers.ListSerializer(child=OperationSerializer())
 
     class CreateVideoResponseSerializer(serializers.Serializer):
@@ -67,6 +68,13 @@ class ListCreateVideoView(APIView):
         manual_parameters=[
             openapi.Parameter('file', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Video to be uploaded'),
             openapi.Parameter(
+                'quality_level', 
+                openapi.IN_FORM, 
+                type=openapi.TYPE_NUMBER, 
+                description="Quality of exported video (0 = highest, 51 = lowest)",
+                default=23
+            ),
+            openapi.Parameter(
                 'operations', 
                 openapi.IN_FORM, 
                 type=openapi.TYPE_OBJECT, 
@@ -83,6 +91,7 @@ class ListCreateVideoView(APIView):
         serializer = self.CreateVideoRequestSerializer(
             data={
                 "file": request.data["file"],
+                "quality_level": request.data["quality_level"],
                 "operations": json.loads(request.data["operations"]),
             }
         )
@@ -90,6 +99,7 @@ class ListCreateVideoView(APIView):
         
         video = Video.objects.create(
             file=serializer.validated_data["file"],
+            quality_level=serializer.validated_data["quality_level"],
             user=request.user,
         )
         operation_group = OperationGroup.objects.create(

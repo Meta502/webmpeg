@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.management import os
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.fields.json import json
 from django.urls.converters import uuid
@@ -26,6 +27,14 @@ class Video(models.Model):
         max_length=64,
         choices=MEDIA_STATUS_TYPE_CHOICES.items(),
         default=MediaStatusType.PENDING,
+    )
+
+    quality_level = models.IntegerField(
+        default=23,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(51),
+        ]
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="videos")

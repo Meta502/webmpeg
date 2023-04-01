@@ -46,7 +46,8 @@ def process_video(video: Video, connection: BlockingConnection, channel: Channel
             processed_video,
             processed_audio,
             f"uploads/{video.id}.mp4",
-            threads=2
+            threads=2,
+            crf=video.quality_level,
         ).overwrite_output().run()
     except ffmpeg.Error as e:
         cb = functools.partial(ack_message, channel=channel, delivery_tag=delivery_tag, is_nack=True)
