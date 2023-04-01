@@ -29,7 +29,11 @@ class RabbitMQ:
         self.channel.queue_declare(*args, **kwargs)
 
     def publish(self, key: str, data: str):
-        self.channel.basic_publish(exchange='', routing_key=key, body=data)
+        try:
+            self.channel.basic_publish(exchange='', routing_key=key, body=data)
+        except:
+            self.channel = self.connection.channel()
+            self.publish(key, data)
 
     def consume(self, key: str, callback: Callable[[Any, Any, Any, Any], None]):
         self.channel.basic_consume(queue=key, on_message_callback=callback, auto_ack=True)
