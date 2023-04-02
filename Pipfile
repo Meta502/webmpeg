@@ -11,6 +11,7 @@ pika = "*"
 drf-yasg = "*"
 djangorestframework = "*"
 ffmpeg-python = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 

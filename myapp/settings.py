@@ -31,8 +31,14 @@ SECRET_KEY = 'django-insecure-ltu5g#%==jus32=4htyr*iic+oecmk52=mvit)t+zppqera%eu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '104.197.123.44',
+    'kroniify.cloud',
+    'api.kroniify.cloud',
+]
 
+CSRF_TRUSTED_ORIGINS = ['https://*.kroniify.cloud','https://*.127.0.0.1']
 
 # Application definition
 
@@ -43,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "corsheaders",
     'drf_yasg',
     'rest_framework',
     'rest_framework.authtoken',
@@ -53,6 +60,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -134,6 +142,12 @@ STATIC_URL = 'static/'
 
 MEDIA_URL = '/uploads/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://104.197.123.44',
+    'https://kroniify.cloud'
+]
 
 SWAGGER_SETTINGS = {
   'SECURITY_DEFINITIONS': {
