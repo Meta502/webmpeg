@@ -30,9 +30,9 @@ class Video(models.Model):
     )
 
     quality_level = models.IntegerField(
-        default=23,
+        default=16,
         validators=[
-            MinValueValidator(0),
+            MinValueValidator(16),
             MaxValueValidator(51),
         ]
     )

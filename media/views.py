@@ -71,7 +71,7 @@ class ListCreateVideoView(APIView):
                 'quality_level', 
                 openapi.IN_FORM, 
                 type=openapi.TYPE_NUMBER, 
-                description="Quality of exported video (0 = highest, 51 = lowest)",
+                description="Quality of exported video (16 = highest allowed, 51 = lowest)",
                 default=23
             ),
             openapi.Parameter(
